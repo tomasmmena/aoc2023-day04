@@ -2,6 +2,7 @@ use std::env;
 use std::io::{self, BufRead};
 use std::fs;
 
+#[derive(Debug, Clone)]
 struct ScratchCard {
     id: usize,
     winning_numbers: Vec<usize>,
@@ -9,15 +10,30 @@ struct ScratchCard {
 }
 
 impl ScratchCard {
-    fn score(&self) -> usize {
-        let winning_number_count = self.numbers
+    fn winning_number_count(&self) -> u32 {
+        self.numbers
             .iter()
             .map(|n| if self.winning_numbers.contains(n) { 1 } else { 0 })
-            .sum::<u32>();
+            .sum::<u32>()
+    }
 
+    fn score(&self) -> usize {
         let base: usize = 2;
+        let winning_number_count = self.winning_number_count();
         if winning_number_count == 0 { 0 } else { base.pow(winning_number_count - 1) }
     }
+}
+
+
+fn count_scratchcards(pile: &[ScratchCard]) -> usize {
+    let mut counts: Vec<usize> = vec![1; pile.len()];
+    for scratchcard in pile {
+        let winning_number_count = scratchcard.winning_number_count();
+        for i in scratchcard.id..(scratchcard.id + winning_number_count as usize){
+            counts[i] += counts[scratchcard.id - 1];
+        }
+    }
+    counts.into_iter().sum()
 }
 
 
@@ -49,5 +65,5 @@ fn main() {
         })
         .collect();
 
-    println!("Total scratchcard score: {}", data.into_iter().map(|sc| sc.score()).sum::<usize>());
+    println!("Total scratchcards: {}", count_scratchcards(&data));
 }
